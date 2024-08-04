@@ -20,5 +20,13 @@ class Surveys
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function surveysID(): array
+    {
+        $stmt = $this->pdo->prepare("SELECT id FROM surveys ");
+        $stmt->execute();
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
 
 }
