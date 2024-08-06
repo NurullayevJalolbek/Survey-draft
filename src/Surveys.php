@@ -20,13 +20,14 @@ class Surveys
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function surveysID(): array
+    public function surveysID($survey_id): array
     {
-        $stmt = $this->pdo->prepare("SELECT id FROM surveys ");
+
+        $stmt = $this->pdo->prepare("SELECT * FROM surveys where id = :survey_id ");
+        $stmt->bindParam(":survey_id", $survey_id, PDO::PARAM_INT);
         $stmt->execute();
+
         
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-
-
 }

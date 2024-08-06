@@ -19,19 +19,30 @@ class Users
         $stmt->bindParam(":phone", $phone);
         $stmt->execute();
     }
-    public function userAll(): array
-    {
-        $stmt = $this->pdo->prepare("SELECT user_id FROM users");
-        $stmt->execute();
+    // public function userAll(): array
+    // {
+    //     $stmt = $this->pdo->prepare("SELECT user_id FROM users");
+    //     $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
+    //     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // }
+
+
+
+
     public function userGet(int $chat_id): array|bool
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = $chat_id");
+        // SQL so'rovda parametrni foydalaning
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = :chat_id");
+        $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+
+
+
+
     public function userUpdate(int $chat_id, string $name, int $phone)
     {
         $stmt = $this->pdo->prepare("UPDATE users SET name = :name, phone_number = :phone WHERE user_id = :chat_id");
@@ -44,6 +55,8 @@ class Users
 
 
 
+
+
     public function addDATA(int $chat_id, string|null $data): void
     {
         $stmt = $this->pdo->prepare("UPDATE users SET data = :data WHERE user_id = :chat_id");
@@ -52,6 +65,13 @@ class Users
         $stmt->execute();
     }
 
+
+
+
+
+
+
+
     public function deletDATA(int $chat_id): void
     {
         $stmt = $this->pdo->prepare("UPDATE users SET data = NULL WHERE user_id = :chat_id");
@@ -59,7 +79,16 @@ class Users
         $stmt->execute();
     }
 
-    public function allDATA($chat_id){
+
+
+
+
+
+
+    
+
+    public function allDATA($chat_id)
+    {
 
         $stmt = $this->pdo->prepare("SELECT data FROM users WHERE user_id = :chat_id");
         $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);

@@ -12,6 +12,12 @@ $suveyVariant = new Survey_variants();
 require_once "src/Surveys.php";
 $surveys = new Surveys();
 
+require_once "src/Votes.php";
+$votes = new Votes();
+
+require_once  "src/Channels.php";
+$channels = new Channels();
+
 
 require_once "src/Bot.php";
 $bot = new Bot($_ENV['BOT_TOKEN']);
@@ -24,7 +30,8 @@ if (isset($update->message)) {
 
     $message_id = $message->message_id;
 
-    $malumotlar = $users->userAll();
+
+
 
 
     if ($text == "/start") {
@@ -32,20 +39,50 @@ if (isset($update->message)) {
         $users->deletDATA($chat_id);
 
         $user = $users->userGet($chat_id);
+
         if (!$user) {
             $users->usersAdd($chat_id, (string)$name = null, $phone = null);
             $bot->startCommand($chat_id);
             return;
         } else {
+            if (!$user['phone_number']) {
+                {
+                    $bot->startCommand($chat_id);
+                    return;
+                }
+            }
             $bot->sendSurveys($chat_id);
             return;
         }
     }
 
+
+
+
+
     if ($text == "/sorovnomalar") {
-        $bot->sendSurveys($chat_id);
-        return;
+        $user = $users->userGet($chat_id);
+
+        if (!$user) {
+            $users->usersAdd($chat_id, (string)$name =null, $phone = null); // $name va $phone ni null sifatida uzatamiz
+            $bot->startCommand($chat_id);
+            return;
+        } else {
+            if (!$user['phone_number']) {
+                $bot->startCommand($chat_id);
+                return;
+            }
+            $bot->sendSurveys($chat_id);
+            return;
+        }
     }
+
+
+
+
+
+
+
     if (isset($message->contact)) {
         $first_name = $message->contact->first_name ?? '';
         $last_name = $message->contact->last_name ?? '';
@@ -67,6 +104,11 @@ if (isset($update->message)) {
     }
 }
 
+
+
+
+
+
 if (isset($update->callback_query)) {
 
     $callbackQuery = $update->callback_query;
@@ -75,35 +117,104 @@ if (isset($update->callback_query)) {
     $messageId = $callbackQuery->message->message_id;
 
     if (strpos($callbackData, 'tekshirish') !== false) {
-        $dataID = $users->allDATA($chatId);
-        $bot->channel_check($chatId, $messageId);
+        $bot->channel_check($chatId);
 
-        // Kanalga a'zo ekanligini tekshirib, variantlarni yuborish
+        
         $status = $bot->isMember((int)-1002170814544, (int)$chatId);
+
+
         if ($status === 'member' || $status === 'administrator' || $status === 'creator') {
+            $dataID = $users->allDATA($chatId);
             $bot->sendVariants($chatId, $messageId, (int)$dataID);
             return;
         }
     }
 
-    $colbacdata = explode('-', $callbackData);
-    $colbacdata = $colbacdata[1];
-
-    $idArray = $surveys->surveysID();
 
 
-    if (array_search($colbacdata, $idArray) != true) {
-        $status = $bot->isMember((int)-1002170814544, (int)$chatId);
 
-        $users->addDATA($chatId, $colbacdata);
 
-        if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
 
-            $bot->channel_check($chatId);
-            return;
-        } else {
 
-            $bot->sendVariants($chatId, $messageId, $colbacdata);
+
+
+    if (strpos($callbackData, 'id-') !== false) {
+
+        $colbacdata = explode('-', $callbackData);
+        $colbacdata = $colbacdata[1];
+
+
+        $idArray = $surveys->surveysID($colbacdata);
+
+
+        if ($idArray) {
+            $status = $bot->isMember((int)-1002170814544, (int)$chatId);
+
+            $users->addDATA($chatId, $colbacdata);
+
+            if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+                $bot->channel_check($chatId);
+                return;
+            } else {
+                $bot->sendVariants($chatId, $messageId, $colbacdata);
+            }
         }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+    if (strpos($callbackData, 'page-') === 0) {
+        $page = (int)substr($callbackData, 5);
+        $bot->sendSurveys2($chatId, $messageId,$page);
+        return;
+    }
+    if (strpos($callbackData, 'page_') === 0) {
+
+        $page = (int)substr($callbackData, 5);
+        $dataID = $users->allDATA($chatId);
+
+        $bot->sendVariants($chatId, $messageId, (int )$dataID,$page);
+        return;
+    }
+
+
+
+
+
+
+
+
+
+
+    if (strpos($callbackData, 'id_') !== false) {
+
+//         $colbacdata = explode('_', $callbackData);
+//         $colbacdata = $colbacdata[1];
+//
+//
+//         $userdata = $users -> allDATA($chatId);
+//
+//         $arrayVotes = $votes  -> allVOTES();
+//
+//         if ( array_search((int)$userdata, $arrayVotes) !== false) {
+//
+//             $bot -> votesERROR($chatId, $messageId);
+//
+//         }
+//
+//        $votes -> addVOTES((int)$chatId, (int)$userdata, (int)$colbacdata);
+        $bot->votes($chatId, $messageId);
+
+
     }
 }

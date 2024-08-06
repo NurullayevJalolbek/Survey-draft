@@ -1,10 +1,10 @@
 <?php
 
 declare(strict_types=1);
-require_once "vendor/autoload.php";
 
 use GuzzleHttp\Client;
 
+require_once "vendor/autoload.php";
 require_once "src/Surveys.php";
 
 
@@ -22,6 +22,15 @@ class Bot
         $this->surves = new Surveys();
         $this->surves_variant = new Survey_variants();
     }
+
+
+
+
+
+
+
+
+
     public function sendMessage(int $chat_id, $text, $reply_markup = null): void
     {
         $content = [
@@ -33,6 +42,9 @@ class Bot
         $reply_markup ? $content['form_params']['reply_markup'] = json_encode($reply_markup) : null;
         $this->client->post('sendMessage', $content);
     }
+
+
+
 
 
     public function editMessageText(int $chat_id, int $message_id, string $text, $reply_markup = null): void
@@ -49,6 +61,18 @@ class Bot
         $this->client->post('editMessageText', $content);
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
     public function startCommand(int $chat_id): void
     {
         $keyboard = [
@@ -61,58 +85,177 @@ class Bot
         $this->sendMessage($chat_id, '📲  Kontagingizni yuboring', $keyboard);
     }
 
+
+
+
+
+
     public function kontagError($chat_id): void
     {
         $this->sendMessage($chat_id, "📱 Iltimos Xurmatli foydalanuvchi o'zingizni kontagingizni yuoboring..🛠❌");
     }
+
+
+
+
+
+
 
     public function sendArray(int $chat_id, $arrayy): void
     {
         $this->sendMessage($chat_id, print_r($arrayy, true));
     }
 
-    public function sendSurveys(int $chat_id): void
+
+
+
+
+
+
+    public function sendSurveys(int $chat_id, int $page = 1): void
     {
         $malumotlar = $this->surves->surveysAll();
-        $inline_keybord = array();
+        $surveysPerPage = 10;
+        $totalSurveys = count($malumotlar);
+        $totalPages = ceil($totalSurveys / $surveysPerPage);
+
+        $start = ($page - 1) * $surveysPerPage;
+        $end = min($start + $surveysPerPage, $totalSurveys);
+
+        $inline_keyboard = array();
         $row = array();
 
-        foreach ($malumotlar as $item) {
+        for ($i = $start; $i < $end; $i++) {
+            $item = $malumotlar[$i];
             $row[] = ["text" => "{$item['name']}", "callback_data" => "id-{$item['id']}"];
 
-            if (count($row) == 3) {
-                $inline_keybord[] = $row;
+            if (count($row) == 2) {
+                $inline_keyboard[] = $row;
                 $row = array();
             }
         }
 
         if (!empty($row)) {
-            $inline_keybord[] = $row;
+            $inline_keyboard[] = $row;
         }
+
+        // Add pagination buttons
+        $paginationRow = array();
+        if ($page > 1) {
+            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page-" . ($page - 1)];
+        }
+        if ($page < $totalPages) {
+            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page-" . ($page + 1)];
+        }
+        if (!empty($paginationRow)) {
+            $inline_keyboard[] = $paginationRow;
+        }
+
         $keyboard = [
-            'inline_keyboard' => $inline_keybord
+            'inline_keyboard' => $inline_keyboard
         ];
-        $this->sendMessage($chat_id, "Qaysi so'rovnomalarda qatnashmoqchisisz...✏️", $keyboard);
+
+        $messageText = "Qaysi so'rovnomalarda qatnashmoqchisisz...✏️\n\n";
+        $messageText .= "Sahifa: $page/$totalPages";
+
+        $this->sendMessage($chat_id, $messageText, $keyboard);
     }
+
+
+
+
+
+
+
+
+    public function sendSurveys2(int $chat_id, $message_id, int $page = 1): void
+    {
+        $malumotlar = $this->surves->surveysAll();
+        $surveysPerPage = 10;
+        $totalSurveys = count($malumotlar);
+        $totalPages = ceil($totalSurveys / $surveysPerPage);
+
+        $start = ($page - 1) * $surveysPerPage;
+        $end = min($start + $surveysPerPage, $totalSurveys);
+
+        $inline_keyboard = array();
+        $row = array();
+
+        for ($i = $start; $i < $end; $i++) {
+            $item = $malumotlar[$i];
+            $row[] = ["text" => "{$item['name']}", "callback_data" => "id-{$item['id']}"];
+
+            if (count($row) == 2) {
+                $inline_keyboard[] = $row;
+                $row = array();
+            }
+        }
+
+        if (!empty($row)) {
+            $inline_keyboard[] = $row;
+        }
+
+        $paginationRow = array();
+        if ($page > 1) {
+            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page-" . ($page - 1)];
+        }
+        if ($page < $totalPages) {
+            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page-" . ($page + 1)];
+        }
+        if (!empty($paginationRow)) {
+            $inline_keyboard[] = $paginationRow;
+        }
+
+        $keyboard = [
+            'inline_keyboard' => $inline_keyboard
+        ];
+
+        $messageText = "Qaysi so'rovnomalarda qatnashmoqchisisz...✏️\n\n";
+        $messageText .= "Sahifa: $page/$totalPages";
+
+        $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
+    }
+
+
+
+
+
+
+
 
     public function removeKeyboard(int $chat_id): void
     {
         $this->sendMessage($chat_id, "Sizning ovozingiz biz uchun muhum.....!", ['remove_keyboard' => true]);
     }
 
-    public function sendVariants(int $chat_id, $message_id, $votesId): void
+
+
+
+
+
+
+    public function sendVariants(int $chat_id, $message_id, $votesId, int $page = 1): void
     {
+        $variantsPerPage = 10;
         $surveyarray = $this->surves_variant->survey_variantsAll($votesId);
+        $totalVariants = count($surveyarray);
+        $totalPages = ceil($totalVariants / $variantsPerPage);
+
+
+
+        $start = ($page - 1) * $variantsPerPage;
+        $end = min($start + $variantsPerPage, $totalVariants);
 
         $malumotlar = [];
-        $inline_keybord = array();
+        $inline_keybord = [];
 
-        foreach ($surveyarray as $item) {
+        for ($i = $start; $i < $end; $i++) {
+            $item = $surveyarray[$i];
             $malumotlar[] = ["text" => "{$item['name']}", "callback_data" => "id_{$item['id']}"];
 
-            if (count($malumotlar) == 3) {
+            if (count($malumotlar) == 2) {
                 $inline_keybord[] = $malumotlar;
-                $malumotlar = array();
+                $malumotlar = [];
             }
         }
 
@@ -120,18 +263,31 @@ class Bot
             $inline_keybord[] = $malumotlar;
         }
 
-        $this->editMessageText($chat_id, $message_id, 'Hohlagan bittasiga ovoz berishingiz mumkun...', ['inline_keyboard' => $inline_keybord]);
+        $paginationRow = [];
+        if ($page > 1) {
+            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page_" . ($page - 1)];
+        }
+        if ($page < $totalPages) {
+            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page_" . ($page + 1)];
+        }
+        if (!empty($paginationRow)) {
+            $inline_keybord[] = $paginationRow;
+        }
+
+        $keyboard = [
+            'inline_keyboard' => $inline_keybord
+        ];
+
+        $messageText = 'Hohlagan bittasiga ovoz berishingiz mumkun...\n';
+        $messageText .= "\n\nSahifa: $page/$totalPages";
+
+
+        $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
     }
 
-    public function deleteMessage(int $chat_id, int $message_id): void // DELET MESSAGE 
-    {
-        $this->client->post('deleteMessage', [
-            'form_params' => [
-                'chat_id' => $chat_id,
-                'message_id' => $message_id
-            ]
-        ]);
-    }
+
+
+
 
     public function isMember(int $chat_id, int $user_id)
     {
@@ -151,6 +307,8 @@ class Bot
     public function channel_check(int $chat_id): void
     {
         $chanelID = -1002170814544; // Kanal yoki guruh ID
+
+
         $status = $this->isMember($chanelID, $chat_id);
 
         if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
@@ -167,5 +325,38 @@ class Bot
             $text = "Kanalga AZO bo'lishingiz TALAB qilinadi....❌   Quyidagi tugmani bosing:";
             $this->sendMessage($chat_id, $text, $inlineKeyboard);
         }
+
+
     }
+
+   public function getChat($chat_id)
+   {
+       $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['TOKEN'] . '/getChat',
+           ['json' => ['chat_id' => $chat_id]] );
+
+       $responseBody = $response->getBody()->getContents();
+       $result = json_decode($responseBody, true);
+
+       return $result;
+
+   }
+
+
+
+
+
+
+
+   public function votes(int $chat_id, $message_id): void
+   {
+
+       $this->editMessageText($chat_id, $message_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+   }
+
+
+//    public function votesERROR($chat_id, $message_id): void
+//    {
+//
+//        $this->editMessageText($chat_id, $message_id, "Hurmatli foydanalanuvchi bu ro'rovnomada oldin qatnashgansiz ... ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+//    }
 }
