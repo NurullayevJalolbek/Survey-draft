@@ -17,4 +17,14 @@ class Survey_variants
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public  function  survey_idALL($survey_variant_id)
+    {
+
+        $stmt = $this->pdo->prepare("SELECT survey_id FROM survey_variants WHERE id = :survey_variant_id");
+        $stmt->bindParam(":survey_variant_id", $survey_variant_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+
+    }
 }

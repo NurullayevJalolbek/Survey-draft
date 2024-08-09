@@ -15,7 +15,7 @@ $surveys = new Surveys();
 require_once "src/Votes.php";
 $votes = new Votes();
 
-require_once  "src/Channels.php";
+require_once "src/Channels.php";
 $channels = new Channels();
 
 
@@ -29,9 +29,6 @@ if (isset($update->message)) {
     $chat_id = $message->chat->id;
 
     $message_id = $message->message_id;
-
-
-
 
 
     if ($text == "/start") {
@@ -55,16 +52,32 @@ if (isset($update->message)) {
             return;
         }
     }
+    if (strpos($text, '/start') === 0) {
 
+        $survey_votes = str_replace('/start ', '', $text);
 
+        $user = $users->userGet($chat_id);
+        if (!$user) {
+            $users->usersAdd($chat_id, (string)$name = null, $phone = null);
+        }
+        $channelARREY = $channels->allCHANNEL();
 
+        $status = $bot->isMember2($channelARREY, (int)$chat_id);
+
+        if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+            $bot->channel_check2((int)$chat_id, (array)$channelARREY);
+            $users->usersUpdatedata($chat_id, (string)$survey_votes, (string)$name = null, $phone = null,);
+            return;
+        }
+
+    }
 
 
     if ($text == "/sorovnomalar") {
         $user = $users->userGet($chat_id);
 
         if (!$user) {
-            $users->usersAdd($chat_id, (string)$name =null, $phone = null); // $name va $phone ni null sifatida uzatamiz
+            $users->usersAdd($chat_id, (string)$name = null, $phone = null);
             $bot->startCommand($chat_id);
             return;
         } else {
@@ -76,11 +89,6 @@ if (isset($update->message)) {
             return;
         }
     }
-
-
-
-
-
 
 
     if (isset($message->contact)) {
@@ -105,10 +113,6 @@ if (isset($update->message)) {
 }
 
 
-
-
-
-
 if (isset($update->callback_query)) {
 
     $callbackQuery = $update->callback_query;
@@ -116,11 +120,15 @@ if (isset($update->callback_query)) {
     $chatId = $callbackQuery->message->chat->id;
     $messageId = $callbackQuery->message->message_id;
 
-    if (strpos($callbackData, 'tekshirish') !== false) {
-        $bot->channel_check($chatId);
 
-        
-        $status = $bot->isMember((int)-1002170814544, (int)$chatId);
+    if (strpos($callbackData, 'tekshirish') !== false) {
+
+        $channelARREY = $channels->allCHANNEL();
+
+        $bot->channel_check($chatId, $channelARREY);
+
+
+        $status = $bot->isMember($channelARREY, (int)$chatId);
 
 
         if ($status === 'member' || $status === 'administrator' || $status === 'creator') {
@@ -130,12 +138,37 @@ if (isset($update->callback_query)) {
         }
     }
 
+    if (strpos($callbackData, 'TEKSHIRISH') !== false) {
+
+        $channelARREY = $channels->allCHANNEL();
+        $bot->channel_check2($chatId, $channelARREY);
+        $status = $bot->isMember2($channelARREY, (int)$chatId);
 
 
+        if ($status === 'member' || $status === 'administrator' || $status === 'creator') {
+            $uservariantID = $users->allDATA($chatId);
+            $uservariantID = $uservariantID['data'];
+
+            $survey_id = $suveyVariant->survey_idALL($uservariantID);
+            $survey_id = $survey_id['survey_id'];
+
+            $userID = $users->userID($chatId);
+            $userID = $userID['id'];
+
+            $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
+            if ($arrayVotes !== true) {
+                $votes->addVOTES((int)$userID, (int)$survey_id, (int)$uservariantID);
+                $bot->votes2($chatId);
+                return;
+            }
+            $bot->votesERROR2($chatId);
+            return;
 
 
+        }
 
 
+    }
 
 
     if (strpos($callbackData, 'id-') !== false) {
@@ -148,12 +181,17 @@ if (isset($update->callback_query)) {
 
 
         if ($idArray) {
-            $status = $bot->isMember((int)-1002170814544, (int)$chatId);
+
+
+            $channelARREY = $channels->allCHANNEL();
+
+
+            $status = $bot->isMember($channelARREY, (int)$chatId);
 
             $users->addDATA($chatId, $colbacdata);
 
             if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
-                $bot->channel_check($chatId);
+                $bot->channel_check((int)$chatId, (array)$channelARREY);
                 return;
             } else {
                 $bot->sendVariants($chatId, $messageId, $colbacdata);
@@ -162,20 +200,10 @@ if (isset($update->callback_query)) {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
     if (strpos($callbackData, 'page-') === 0) {
+
         $page = (int)substr($callbackData, 5);
-        $bot->sendSurveys2($chatId, $messageId,$page);
+        $bot->sendSurveys2($chatId, $messageId, $page);
         return;
     }
     if (strpos($callbackData, 'page_') === 0) {
@@ -183,37 +211,33 @@ if (isset($update->callback_query)) {
         $page = (int)substr($callbackData, 5);
         $dataID = $users->allDATA($chatId);
 
-        $bot->sendVariants($chatId, $messageId, (int )$dataID,$page);
+        $bot->sendVariants($chatId, $messageId, (int )$dataID, $page);
         return;
     }
 
-
-
-
-
-
-
-
-
-
     if (strpos($callbackData, 'id_') !== false) {
 
-//         $colbacdata = explode('_', $callbackData);
-//         $colbacdata = $colbacdata[1];
-//
-//
-//         $userdata = $users -> allDATA($chatId);
-//
-//         $arrayVotes = $votes  -> allVOTES();
-//
-//         if ( array_search((int)$userdata, $arrayVotes) !== false) {
-//
-//             $bot -> votesERROR($chatId, $messageId);
-//
-//         }
-//
-//        $votes -> addVOTES((int)$chatId, (int)$userdata, (int)$colbacdata);
-        $bot->votes($chatId, $messageId);
+        $colbacdata = explode('_', $callbackData);
+        $colbacdata = $colbacdata[1];
+
+        $userdata = $users->allDATA($chatId);
+
+        $userID = $users->userID($chatId);
+        $userID = $userID['id'];
+
+        $arrayVotes = $votes->allVOTES((int )$userID, (int)$userdata['data']);
+
+        if ($arrayVotes !== true) {
+            $votes->addVOTES($userID, (int)$userdata['data'], (int)$colbacdata);
+            $bot->votes($chatId, $messageId);
+            $bot->sendLINK($chatId, $colbacdata);
+
+            $survey_votes = "{$userdata['data']}_$colbacdata";
+            $users->addsurvey_votes($chatId, $survey_votes);
+            return;
+        }
+        $bot->votesERROR($chatId, $messageId);
+        return;
 
 
     }

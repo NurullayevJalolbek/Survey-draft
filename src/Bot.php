@@ -24,13 +24,6 @@ class Bot
     }
 
 
-
-
-
-
-
-
-
     public function sendMessage(int $chat_id, $text, $reply_markup = null): void
     {
         $content = [
@@ -42,9 +35,6 @@ class Bot
         $reply_markup ? $content['form_params']['reply_markup'] = json_encode($reply_markup) : null;
         $this->client->post('sendMessage', $content);
     }
-
-
-
 
 
     public function editMessageText(int $chat_id, int $message_id, string $text, $reply_markup = null): void
@@ -62,17 +52,6 @@ class Bot
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
     public function startCommand(int $chat_id): void
     {
         $keyboard = [
@@ -86,30 +65,10 @@ class Bot
     }
 
 
-
-
-
-
     public function kontagError($chat_id): void
     {
         $this->sendMessage($chat_id, "📱 Iltimos Xurmatli foydalanuvchi o'zingizni kontagingizni yuoboring..🛠❌");
     }
-
-
-
-
-
-
-
-    public function sendArray(int $chat_id, $arrayy): void
-    {
-        $this->sendMessage($chat_id, print_r($arrayy, true));
-    }
-
-
-
-
-
 
 
     public function sendSurveys(int $chat_id, int $page = 1): void
@@ -162,12 +121,6 @@ class Bot
     }
 
 
-
-
-
-
-
-
     public function sendSurveys2(int $chat_id, $message_id, int $page = 1): void
     {
         $malumotlar = $this->surves->surveysAll();
@@ -217,21 +170,10 @@ class Bot
     }
 
 
-
-
-
-
-
-
     public function removeKeyboard(int $chat_id): void
     {
         $this->sendMessage($chat_id, "Sizning ovozingiz biz uchun muhum.....!", ['remove_keyboard' => true]);
     }
-
-
-
-
-
 
 
     public function sendVariants(int $chat_id, $message_id, $votesId, int $page = 1): void
@@ -240,7 +182,6 @@ class Bot
         $surveyarray = $this->surves_variant->survey_variantsAll($votesId);
         $totalVariants = count($surveyarray);
         $totalPages = ceil($totalVariants / $variantsPerPage);
-
 
 
         $start = ($page - 1) * $variantsPerPage;
@@ -284,79 +225,244 @@ class Bot
 
         $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
     }
-
-
-
-
-
-    public function isMember(int $chat_id, int $user_id)
+    public function sendVariants2(int $chat_id, $message_id, $votesId, int $page = 1): void
     {
-        $response = $this->client->post('getChatMember', [
-            'form_params' => [
-                'chat_id' => $chat_id,
-                'user_id' => $user_id
-            ]
-        ]);
+        $variantsPerPage = 10;
+        $surveyarray = $this->surves_variant->survey_variantsAll($votesId);
+        $totalVariants = count($surveyarray);
+        $totalPages = ceil($totalVariants / $variantsPerPage);
 
-        $body = $response->getBody()->getContents();
-        $result = json_decode($body, true);
 
-        return $result['result']['status'];
+        $start = ($page - 1) * $variantsPerPage;
+        $end = min($start + $variantsPerPage, $totalVariants);
+
+        $malumotlar = [];
+        $inline_keybord = [];
+
+        for ($i = $start; $i < $end; $i++) {
+            $item = $surveyarray[$i];
+            $malumotlar[] = ["text" => "{$item['name']}", "callback_data" => "id_{$item['id']}"];
+
+            if (count($malumotlar) == 2) {
+                $inline_keybord[] = $malumotlar;
+                $malumotlar = [];
+            }
+        }
+
+        if (!empty($malumotlar)) {
+            $inline_keybord[] = $malumotlar;
+        }
+
+        $paginationRow = [];
+        if ($page > 1) {
+            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page_" . ($page - 1)];
+        }
+        if ($page < $totalPages) {
+            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page_" . ($page + 1)];
+        }
+        if (!empty($paginationRow)) {
+            $inline_keybord[] = $paginationRow;
+        }
+
+        $keyboard = [
+            'inline_keyboard' => $inline_keybord
+        ];
+
+        $messageText = 'Hohlagan bittasiga ovoz berishingiz mumkun...\n';
+        $messageText .= "\n\nSahifa: $page/$totalPages";
+
+
+        $this->sendMessage($chat_id, $messageText,  $keyboard);
     }
 
-    public function channel_check(int $chat_id): void
+
+    public function isMember(array $channel_ids, int $user_id)
     {
-        $chanelID = -1002170814544; // Kanal yoki guruh ID
+        foreach ($channel_ids as $channel) {
+            $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChatMember', [
+                'json' => [
+                    'chat_id' => (int)$channel['channel_id'],
+                    'user_id' => $user_id
+                ]
+            ]);
+            $body = $response->getBody()->getContents();
+            $result = json_decode($body, true);
+            return $result['result']['status'];
+        }
+    }
 
 
-        $status = $this->isMember($chanelID, $chat_id);
+    public function getChat(int $chat_id)
+    {
+        $response = $this->client->post(
+            'https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChat',
+            ['json' => ['chat_id' => $chat_id]]
+        );
+
+        $responseBody = $response->getBody()->getContents();
+        $result = json_decode($responseBody, true);
+
+        return $result['result'];
+    }
+
+    public function channel_check(int $chat_id, array $channel_id): void
+    {
+        $status = $this->isMember($channel_id, $chat_id);
 
         if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
-            $inlineKeyboard = [
-                'inline_keyboard' => [
-                    [
-                        ['text' => "Kanalga azo Bo'ling  ", 'url' => 'https://t.me/project_bot2004']
-                    ],
-                    [
-                        ['text' => "Tekshirish ✅", 'callback_data' => "tekshirish"]
-                    ]
-                ]
+            $channels = [];
+            foreach ($channel_id as $channel) {
+                $channel_info = $this->getChat($channel['channel_id']);
+                $channels[] = [
+                    'title' => $channel_info['title'],
+                    'url' => $channel_info['invite_link']
+                ];
+            }
+
+            $inlineKeyboard = [];
+            foreach ($channels as $channel) {
+                $inlineKeyboard['inline_keyboard'][] = [
+                    ['text' => $channel['title'], 'url' => $channel['url']]
+                ];
+            }
+            $inlineKeyboard['inline_keyboard'][] = [
+                ['text' => "Tekshirish ✅", 'callback_data' => "tekshirish"]
             ];
+
             $text = "Kanalga AZO bo'lishingiz TALAB qilinadi....❌   Quyidagi tugmani bosing:";
             $this->sendMessage($chat_id, $text, $inlineKeyboard);
         }
-
-
     }
 
-   public function getChat($chat_id)
-   {
-       $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['TOKEN'] . '/getChat',
-           ['json' => ['chat_id' => $chat_id]] );
 
-       $responseBody = $response->getBody()->getContents();
-       $result = json_decode($responseBody, true);
+    public function votes(int $chat_id, $message_id): void
+    {
 
-       return $result;
+        $this->editMessageText($chat_id, $message_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+    }
 
-   }
+    public function votes2(int $chat_id): void
+    {
 
-
-
+        $this->sendMessage($chat_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+    }
 
 
+    public function votesERROR($chat_id, $message_id): void
+    {
+
+        $this->editMessageText($chat_id, $message_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
+        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+    }
+    public function votesERROR2($chat_id): void
+    {
+
+        $this->sendMessage($chat_id,"Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
+        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+    }
 
 
-   public function votes(int $chat_id, $message_id): void
-   {
+    public function sendLINK($chat_id, $survey_votes): void
+    {
+        $url = "https://t.me/share/url?url=https://t.me/{$_ENV['BOT_USERNAME']}?start={$survey_votes}";
 
-       $this->editMessageText($chat_id, $message_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
-   }
+        $inlineKeyboard ['inline_keyboard'][]= [['text' => "Havolani ulashish", 'url' => $url]];
+
+        $message = "Quyidagi havolini do'slaringizga ulashishingiz mumkin:";
+
+        $this->sendMessage($chat_id, $message, $inlineKeyboard);
+    }
 
 
-//    public function votesERROR($chat_id, $message_id): void
-//    {
-//
-//        $this->editMessageText($chat_id, $message_id, "Hurmatli foydanalanuvchi bu ro'rovnomada oldin qatnashgansiz ... ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
-//    }
+
+
+
+
+
+
+
+
+
+
+
+    public function isMember2(array $channel_ids, int $user_id)
+    {
+        foreach ($channel_ids as $channel) {
+            $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChatMember', [
+                'json' => [
+                    'chat_id' => (int)$channel['channel_id'],
+                    'user_id' => $user_id
+                ]
+            ]);
+            $body = $response->getBody()->getContents();
+            $result = json_decode($body, true);
+            return $result['result']['status'];
+        }
+    }
+
+
+    public function getChat2(int $chat_id)
+    {
+        $response = $this->client->post(
+            'https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChat',
+            ['json' => ['chat_id' => $chat_id]]
+        );
+
+        $responseBody = $response->getBody()->getContents();
+        $result = json_decode($responseBody, true);
+
+        return $result['result'];
+    }
+
+    public function channel_check2(int $chat_id, array $channel_id): void
+    {
+        $status = $this->isMember2($channel_id, $chat_id);
+
+        if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+            $channels = [];
+            foreach ($channel_id as $channel) {
+                $channel_info = $this->getChat2($channel['channel_id']);
+                $channels[] = [
+                    'title' => $channel_info['title'],
+                    'url' => $channel_info['invite_link']
+                ];
+            }
+
+            $inlineKeyboard = [];
+            foreach ($channels as $channel) {
+                $inlineKeyboard['inline_keyboard'][] = [
+                    ['text' => $channel['title'], 'url' => $channel['url']]
+                ];
+            }
+            $inlineKeyboard['inline_keyboard'][] = [
+                ['text' => "TEKSHIRISH✅", 'callback_data' => "TEKSHIRISH"]
+            ];
+
+            $text = "Kanalga AZO bo'lishingiz TALAB qilinadi....❌   Quyidagi tugmani bosing:";
+            $this->sendMessage($chat_id, $text, $inlineKeyboard);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

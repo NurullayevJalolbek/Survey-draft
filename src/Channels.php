@@ -12,7 +12,7 @@ class Channels
         $this->pdo = DB::connect();
     }
 
-    public  function  allCHANNEL()
+    public  function  allCHANNEL():array
     {
         $stmt = $this ->pdo->prepare("SELECT * FROM channels");
         $stmt->execute();
