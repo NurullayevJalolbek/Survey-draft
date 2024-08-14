@@ -30,13 +30,7 @@ class Users
 
         $stmt->execute();
     }
-    // public function userAll(): array
-    // {
-    //     $stmt = $this->pdo->prepare("SELECT user_id FROM users");
-    //     $stmt->execute();
 
-    //     return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    // }
 
     public  function  allchatID(int $token):bool
     {
@@ -55,16 +49,6 @@ class Users
         $stmt->bindParam(":survey_votes", $survey_votes, PDO::PARAM_STR);
         $stmt->execute();
     }
-
-    public  function  allsurvey_votes($user_id)
-    {
-        $stmt = $this->pdo->prepare("SELECT survey_votes FROM users WHERE user_id = :user_id");
-        $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
-
-    }
-
 
     public function userGet(int $chat_id): array|bool
     {

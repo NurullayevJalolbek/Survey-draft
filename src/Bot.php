@@ -225,7 +225,8 @@ class Bot
 
         $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
     }
-    public function sendVariants2(int $chat_id, $message_id, $votesId, int $page = 1): void
+
+    public function sendVariants2(int $chat_id, $votesId, int $page = 1): void
     {
         $variantsPerPage = 10;
         $surveyarray = $this->surves_variant->survey_variantsAll($votesId);
@@ -272,11 +273,11 @@ class Bot
         $messageText .= "\n\nSahifa: $page/$totalPages";
 
 
-        $this->sendMessage($chat_id, $messageText,  $keyboard);
+        $this->sendMessage($chat_id, $messageText, $keyboard);
     }
 
 
-    public function isMember(array $channel_ids, int $user_id)
+    public function isMember(array $channel_ids, int $user_id): bool
     {
         foreach ($channel_ids as $channel) {
             $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChatMember', [
@@ -287,8 +288,18 @@ class Bot
             ]);
             $body = $response->getBody()->getContents();
             $result = json_decode($body, true);
-            return $result['result']['status'];
+
+            if (isset($result['result']['status'])) {
+                $status = $result['result']['status'];
+                if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
+
+        return true;
     }
 
 
@@ -309,7 +320,7 @@ class Bot
     {
         $status = $this->isMember($channel_id, $chat_id);
 
-        if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+        if (!$status) {
             $channels = [];
             foreach ($channel_id as $channel) {
                 $channel_info = $this->getChat($channel['channel_id']);
@@ -354,10 +365,11 @@ class Bot
         $this->editMessageText($chat_id, $message_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
         ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
     }
+
     public function votesERROR2($chat_id): void
     {
 
-        $this->sendMessage($chat_id,"Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
+        $this->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
         ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
     }
 
@@ -366,7 +378,7 @@ class Bot
     {
         $url = "https://t.me/share/url?url=https://t.me/{$_ENV['BOT_USERNAME']}?start={$survey_votes}";
 
-        $inlineKeyboard ['inline_keyboard'][]= [['text' => "Havolani ulashish", 'url' => $url]];
+        $inlineKeyboard ['inline_keyboard'][] = [['text' => "Havolani ulashish", 'url' => $url]];
 
         $message = "Quyidagi havolini do'slaringizga ulashishingiz mumkin:";
 
@@ -374,19 +386,10 @@ class Bot
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-    public function isMember2(array $channel_ids, int $user_id)
+    public function isMember2(array $channel_ids, int $user_id): bool
     {
+        var_dump($channel_ids);
+        echo $user_id;
         foreach ($channel_ids as $channel) {
             $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChatMember', [
                 'json' => [
@@ -394,11 +397,23 @@ class Bot
                     'user_id' => $user_id
                 ]
             ]);
+
             $body = $response->getBody()->getContents();
             $result = json_decode($body, true);
-            return $result['result']['status'];
+
+            if (isset($result['result']['status'])) {
+                $status = $result['result']['status'];
+                if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+                    return false;
+                }
+            } else {
+                return false;
+            }
         }
+
+        return true;
     }
+
 
 
     public function getChat2(int $chat_id)
@@ -418,7 +433,7 @@ class Bot
     {
         $status = $this->isMember2($channel_id, $chat_id);
 
-        if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+        if (!$status) {
             $channels = [];
             foreach ($channel_id as $channel) {
                 $channel_info = $this->getChat2($channel['channel_id']);
@@ -442,27 +457,5 @@ class Bot
             $this->sendMessage($chat_id, $text, $inlineKeyboard);
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

@@ -54,21 +54,41 @@ if (isset($update->message)) {
     }
     if (strpos($text, '/start') === 0) {
 
+        $channelARREY = $channels->allCHANNEL();
+
         $survey_votes = str_replace('/start ', '', $text);
 
         $user = $users->userGet($chat_id);
         if (!$user) {
             $users->usersAdd($chat_id, (string)$name = null, $phone = null);
         }
-        $channelARREY = $channels->allCHANNEL();
 
-        $status = $bot->isMember2($channelARREY, (int)$chat_id);
+        $status1 = $bot->isMember2($channelARREY, (int)$chat_id);
+        echo $status1;
+        if ($status1  === false) {
 
-        if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
             $bot->channel_check2((int)$chat_id, (array)$channelARREY);
-            $users->usersUpdatedata($chat_id, (string)$survey_votes, (string)$name = null, $phone = null,);
+            $users->usersUpdatedata($chat_id, (string)$survey_votes, (string)$name = null, $phone = null);
             return;
         }
+
+
+        $uservariantID = $survey_votes;
+
+        $survey_id = $suveyVariant->survey_idALL($uservariantID);
+        $survey_id = $survey_id['survey_id'];
+
+        $userID = $users->userID($chat_id);
+        $userID = $userID['id'];
+
+        $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
+        if ($arrayVotes !== true) {
+            $votes->addVOTES((int)$userID, (int)$survey_id, (int)$uservariantID);
+            $bot->votes2($chat_id);
+            return;
+        }
+        $bot->votesERROR2($chat_id);
+        return;
 
     }
 
@@ -121,9 +141,12 @@ if (isset($update->callback_query)) {
     $messageId = $callbackQuery->message->message_id;
 
 
+    $channelARREY = $channels->allCHANNEL();
+    $dataID = $users->allDATA($chatId);
+
+
     if (strpos($callbackData, 'tekshirish') !== false) {
 
-        $channelARREY = $channels->allCHANNEL();
 
         $bot->channel_check($chatId, $channelARREY);
 
@@ -131,21 +154,20 @@ if (isset($update->callback_query)) {
         $status = $bot->isMember($channelARREY, (int)$chatId);
 
 
-        if ($status === 'member' || $status === 'administrator' || $status === 'creator') {
-            $dataID = $users->allDATA($chatId);
+        if ($status) {
             $bot->sendVariants($chatId, $messageId, (int)$dataID);
             return;
         }
     }
 
+
     if (strpos($callbackData, 'TEKSHIRISH') !== false) {
 
-        $channelARREY = $channels->allCHANNEL();
-        $bot->channel_check2($chatId, $channelARREY);
+
         $status = $bot->isMember2($channelARREY, (int)$chatId);
 
 
-        if ($status === 'member' || $status === 'administrator' || $status === 'creator') {
+        if ($status) {
             $uservariantID = $users->allDATA($chatId);
             $uservariantID = $uservariantID['data'];
 
@@ -166,10 +188,12 @@ if (isset($update->callback_query)) {
 
 
         }
+        $bot->channel_check2((int)$chatId, (array)$channelARREY);
+
+
 
 
     }
-
 
     if (strpos($callbackData, 'id-') !== false) {
 
@@ -190,7 +214,7 @@ if (isset($update->callback_query)) {
 
             $users->addDATA($chatId, $colbacdata);
 
-            if ($status !== 'member' && $status !== 'administrator' && $status !== 'creator') {
+            if (!$status) {
                 $bot->channel_check((int)$chatId, (array)$channelARREY);
                 return;
             } else {
