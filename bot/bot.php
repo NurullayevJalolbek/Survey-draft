@@ -64,7 +64,6 @@ if (isset($update->message)) {
         }
 
         $status1 = $bot->isMember2($channelARREY, (int)$chat_id);
-        echo $status1;
         if ($status1  === false) {
 
             $bot->channel_check2((int)$chat_id, (array)$channelARREY);
@@ -163,7 +162,7 @@ if (isset($update->callback_query)) {
 
     if (strpos($callbackData, 'TEKSHIRISH') !== false) {
 
-
+        $bot->channel_check2($chatId, $channelARREY);
         $status = $bot->isMember2($channelARREY, (int)$chatId);
 
 
@@ -188,11 +187,6 @@ if (isset($update->callback_query)) {
 
 
         }
-        $bot->channel_check2((int)$chatId, (array)$channelARREY);
-
-
-
-
     }
 
     if (strpos($callbackData, 'id-') !== false) {
@@ -203,7 +197,6 @@ if (isset($update->callback_query)) {
 
         $idArray = $surveys->surveysID($colbacdata);
 
-
         if ($idArray) {
 
 
@@ -213,6 +206,12 @@ if (isset($update->callback_query)) {
             $status = $bot->isMember($channelARREY, (int)$chatId);
 
             $users->addDATA($chatId, $colbacdata);
+
+            if (empty($channelARREY)){
+                $bot ->  sendVariants($chatId, $messageId, $colbacdata);
+                return;
+            }
+
 
             if (!$status) {
                 $bot->channel_check((int)$chatId, (array)$channelARREY);
