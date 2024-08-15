@@ -16,11 +16,16 @@ require_once "src/Votes.php";
 $votes = new Votes();
 
 require_once "src/Channels.php";
+require_once "src/Router.php";
+
 $channels = new Channels();
 
 
 require_once "src/Bot.php";
 $bot = new Bot($_ENV['BOT_TOKEN']);
+
+$admin = new Router();
+
 $update = json_decode(file_get_contents('php://input'));
 
 if (isset($update->message)) {
@@ -30,7 +35,37 @@ if (isset($update->message)) {
 
     $message_id = $message->message_id;
 
-
+    //admin part
+    if ($text === '/admin') {
+        $admin->deleteStatus($chat_id);
+        if ($admin->checkUserId($chat_id)) {
+            try {
+                $bot->sendMessage((int)$chat_id, "Admin panel bo'limiga xush kelibsiz");
+            } catch (GuzzleException $e) {
+                throw new \mysql_xdevapi\Exception('test');
+            }
+        }
+        return;
+    }
+    if ($text === '/ads') {
+        $admin->deleteStatus($chat_id);
+        if ($admin->checkUserId($chat_id)) {
+            $admin->saveStatus("ads", $chat_id);
+            try {
+                $bot->sendMessage((int)$chat_id, "Reklama uchun kerakli ma'lumotni kiriting:");
+            } catch (GuzzleException $e) {
+            }
+        }
+        return;
+    }
+    if ($admin->getStatus('ads', $chat_id)) {
+        try {
+            $admin->saveAds($chat_id, $message_id);
+            $bot->sendMessage($chat_id, 'Reklama muvoffaqayatli saqlandi');
+        } catch (GuzzleException $e) {
+        }
+    }
+    // user part
     if ($text == "/start") {
 
         $users->deletDATA($chat_id);
@@ -144,7 +179,7 @@ if (isset($update->callback_query)) {
     $dataID = $users->allDATA($chatId);
 
 
-    if (strpos($callbackData, 'tekshirish') !== false) {
+    if ($callbackData == 'tekshirish') {
 
 
         $bot->channel_check($chatId, $channelARREY);
