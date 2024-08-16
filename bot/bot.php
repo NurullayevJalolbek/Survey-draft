@@ -118,10 +118,11 @@ if (isset($update->message)) {
         $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
         if ($arrayVotes !== true) {
             $votes->addVOTES((int)$userID, (int)$survey_id, (int)$uservariantID);
-            $bot->votes2($chat_id);
+            $bot->sendMessage($chat_id,  "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
             return;
         }
-        $bot->votesERROR2($chat_id);
+        $bot->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... link 
+        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
         return;
 
     }
@@ -176,7 +177,7 @@ if (isset($update->callback_query)) {
 
 
     $channelARREY = $channels->allCHANNEL();
-    $dataID = $users->allDATA($chatId);
+    $dataID = $users->allDATA( (int ) $chatId);
 
 
     if ($callbackData == 'tekshirish') {
@@ -187,9 +188,8 @@ if (isset($update->callback_query)) {
 
         $status = $bot->isMember($channelARREY, (int)$chatId);
 
-
         if ($status) {
-            $bot->sendVariants($chatId, $messageId, (int)$dataID);
+            $bot -> sendVariants2( $chatId, $messageId, (int)$dataID['data']);
             return;
         }
     }
@@ -217,7 +217,8 @@ if (isset($update->callback_query)) {
                 $bot->votes2($chatId);
                 return;
             }
-            $bot->votesERROR2($chatId);
+            $bot->sendMessage($chatId, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ...
+        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
             return;
 
 
@@ -243,7 +244,7 @@ if (isset($update->callback_query)) {
             $users->addDATA($chatId, $colbacdata);
 
             if (empty($channelARREY)){
-                $bot ->  sendVariants($chatId, $messageId, $colbacdata);
+                $bot -> sendVariants2( $chatId, $messageId, $colbacdata);
                 return;
             }
 
@@ -252,7 +253,7 @@ if (isset($update->callback_query)) {
                 $bot->channel_check((int)$chatId, (array)$channelARREY);
                 return;
             } else {
-                $bot->sendVariants($chatId, $messageId, $colbacdata);
+                $bot -> sendVariants2( $chatId,$messageId, $colbacdata);
             }
         }
     }
@@ -269,13 +270,13 @@ if (isset($update->callback_query)) {
         $page = (int)substr($callbackData, 5);
         $dataID = $users->allDATA($chatId);
 
-        $bot->sendVariants($chatId, $messageId, (int )$dataID, $page);
+        $bot -> sendVariants2( $chatId,$messageId, $dataID['data'], $page);
         return;
     }
 
-    if (strpos($callbackData, 'id_') !== false) {
+    if (mb_stripos($callbackData, 'id_') !== false) {
 
-        $colbacdata = explode('_', $callbackData);
+        $colbacdata = explode('id_', $callbackData);
         $colbacdata = $colbacdata[1];
 
         $userdata = $users->allDATA($chatId);
@@ -285,18 +286,16 @@ if (isset($update->callback_query)) {
 
         $arrayVotes = $votes->allVOTES((int )$userID, (int)$userdata['data']);
 
-        if ($arrayVotes !== true) {
-            $votes->addVOTES($userID, (int)$userdata['data'], (int)$colbacdata);
-            $bot->votes($chatId, $messageId);
-            $bot->sendLINK($chatId, $colbacdata);
-
-            $survey_votes = "{$userdata['data']}_$colbacdata";
-            $users->addsurvey_votes($chatId, $survey_votes);
-            return;
+        if ($arrayVotes) {
+            $bot->editMessageText($chatId, $messageId, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
+        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+            exit();
         }
-        $bot->votesERROR($chatId, $messageId);
-        return;
-
-
+        $votes->addVOTES($userID, (int)$userdata['data'], (int)$colbacdata);
+        $bot->editMessageText($chatId, $messageId, "so'rovnomada qatnashganingiz uchun katta raxmat...");
+        $url = "https://t.me/share/url?url=https://t.me/{$_ENV['BOT_USERNAME']}?start={$callbackData}";
+        $inlineKeyboard ['inline_keyboard'][] = [['text' => "Havolani ulashish", 'url' => $url]];
+        $message = "Quyidagi havolini do'slaringizga ulashishingiz mumkin:";
+        $bot->sendMessage($chatId, $message, $inlineKeyboard);
     }
 }

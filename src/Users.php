@@ -44,7 +44,7 @@ class Users
 
     public  function  addsurvey_votes($chat_id, string $survey_votes)
     {
-        $stmt = $this->pdo->prepare("UPDATE users SET survey_votes = :survey_votes WHERE user_id = :chat_id");
+        $stmt = $this->pdo->prepare("UPDATE users SET data = :survey_votes WHERE user_id = :chat_id");
         $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);
         $stmt->bindParam(":survey_votes", $survey_votes, PDO::PARAM_STR);
         $stmt->execute();
@@ -99,7 +99,7 @@ class Users
         $stmt->execute();
     }
 
-    public function allDATA($chat_id)
+    public function allDATA(int $chat_id)
     {
         $stmt = $this->pdo->prepare("SELECT data FROM users WHERE user_id = :chat_id");
         $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);

@@ -12,8 +12,9 @@ class Survey_variants
 
     public function survey_variantsAll($votes_id): array
     {
+        echo $votes_id;
         $stmt = $this->pdo->prepare("SELECT * FROM survey_variants WHERE survey_id = :votes_id");  
-        $stmt->bindParam(":votes_id", $votes_id);
+        $stmt->bindParam(":votes_id", $votes_id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }

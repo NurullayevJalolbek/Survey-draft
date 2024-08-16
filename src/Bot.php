@@ -74,6 +74,8 @@ class Bot
     public function sendSurveys(int $chat_id, int $page = 1): void
     {
         $malumotlar = $this->surves->surveysAll();
+
+
         $surveysPerPage = 10;
         $totalSurveys = count($malumotlar);
         $totalPages = ceil($totalSurveys / $surveysPerPage);
@@ -98,14 +100,14 @@ class Bot
             $inline_keyboard[] = $row;
         }
 
-        // Add pagination buttons
         $paginationRow = array();
         if ($page > 1) {
-            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page-" . ($page - 1)];
+            $paginationRow[] = ["text" => "⬅️ Orqaga ", "callback_data" => "page-" . ($page - 1)];
         }
         if ($page < $totalPages) {
-            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page-" . ($page + 1)];
+            $paginationRow[] = ["text" => "Oldinga  ➡️", "callback_data" => "page-" . ($page + 1)];
         }
+
         if (!empty($paginationRow)) {
             $inline_keyboard[] = $paginationRow;
         }
@@ -115,7 +117,8 @@ class Bot
         ];
 
         $messageText = "Qaysi so'rovnomalarda qatnashmoqchisisz...✏️\n\n";
-        $messageText .= "Sahifa: $page/$totalPages";
+        $messageText .= "Sahifalar soni : $page/$totalPages";
+        echo $totalPages;
 
         $this->sendMessage($chat_id, $messageText, $keyboard);
     }
@@ -150,10 +153,10 @@ class Bot
 
         $paginationRow = array();
         if ($page > 1) {
-            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page-" . ($page - 1)];
+            $paginationRow[] = ["text" => "⬅️ Orqaga", "callback_data" => "page-" . ($page - 1)];
         }
         if ($page < $totalPages) {
-            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page-" . ($page + 1)];
+            $paginationRow[] = ["text" => "Oldinga ➡️", "callback_data" => "page-" . ($page + 1)];
         }
         if (!empty($paginationRow)) {
             $inline_keyboard[] = $paginationRow;
@@ -164,7 +167,7 @@ class Bot
         ];
 
         $messageText = "Qaysi so'rovnomalarda qatnashmoqchisisz...✏️\n\n";
-        $messageText .= "Sahifa: $page/$totalPages";
+        $messageText .= "Sahifalar soni : $page/$totalPages";
 
         $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
     }
@@ -173,10 +176,13 @@ class Bot
     public function removeKeyboard(int $chat_id): void
     {
         $this->sendMessage($chat_id, "Sizning ovozingiz biz uchun muhum.....!", ['remove_keyboard' => true]);
+        sleep(1);
     }
 
 
-    public function sendVariants(int $chat_id, $message_id, $votesId, int $page = 1): void
+
+
+    public function sendVariants2(int $chat_id, $message_id, $votesId, int $page = 1): void
     {
         $variantsPerPage = 10;
         $surveyarray = $this->surves_variant->survey_variantsAll($votesId);
@@ -206,10 +212,10 @@ class Bot
 
         $paginationRow = [];
         if ($page > 1) {
-            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page_" . ($page - 1)];
+            $paginationRow[] = ["text" => "⬅️ orqaga", "callback_data" => "page_" . ($page - 1)];
         }
         if ($page < $totalPages) {
-            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page_" . ($page + 1)];
+            $paginationRow[] = ["text" => "Oldinga ➡️", "callback_data" => "page_" . ($page + 1)];
         }
         if (!empty($paginationRow)) {
             $inline_keybord[] = $paginationRow;
@@ -220,60 +226,10 @@ class Bot
         ];
 
         $messageText = 'Hohlagan bittasiga ovoz berishingiz mumkun...\n';
-        $messageText .= "\n\nSahifa: $page/$totalPages";
+        $messageText .= "\n\nSahifalar soni : $page/$totalPages";
 
 
-        $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
-    }
-
-    public function sendVariants2(int $chat_id, $votesId, int $page = 1): void
-    {
-        $variantsPerPage = 10;
-        $surveyarray = $this->surves_variant->survey_variantsAll($votesId);
-        $totalVariants = count($surveyarray);
-        $totalPages = ceil($totalVariants / $variantsPerPage);
-
-
-        $start = ($page - 1) * $variantsPerPage;
-        $end = min($start + $variantsPerPage, $totalVariants);
-
-        $malumotlar = [];
-        $inline_keybord = [];
-
-        for ($i = $start; $i < $end; $i++) {
-            $item = $surveyarray[$i];
-            $malumotlar[] = ["text" => "{$item['name']}", "callback_data" => "id_{$item['id']}"];
-
-            if (count($malumotlar) == 2) {
-                $inline_keybord[] = $malumotlar;
-                $malumotlar = [];
-            }
-        }
-
-        if (!empty($malumotlar)) {
-            $inline_keybord[] = $malumotlar;
-        }
-
-        $paginationRow = [];
-        if ($page > 1) {
-            $paginationRow[] = ["text" => "⬅️ Back", "callback_data" => "page_" . ($page - 1)];
-        }
-        if ($page < $totalPages) {
-            $paginationRow[] = ["text" => "Forward ➡️", "callback_data" => "page_" . ($page + 1)];
-        }
-        if (!empty($paginationRow)) {
-            $inline_keybord[] = $paginationRow;
-        }
-
-        $keyboard = [
-            'inline_keyboard' => $inline_keybord
-        ];
-
-        $messageText = 'Hohlagan bittasiga ovoz berishingiz mumkun...\n';
-        $messageText .= "\n\nSahifa: $page/$totalPages";
-
-
-        $this->sendMessage($chat_id, $messageText, $keyboard);
+        $this->editMessageText($chat_id,$message_id, $messageText, $keyboard);
     }
 
 
@@ -344,36 +300,6 @@ class Bot
             $this->sendMessage($chat_id, $text, $inlineKeyboard);
         }
     }
-
-
-    public function votes(int $chat_id, $message_id): void
-    {
-
-        $this->editMessageText($chat_id, $message_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
-    }
-
-    public function votes2(int $chat_id): void
-    {
-
-        $this->sendMessage($chat_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
-    }
-
-
-    public function votesERROR($chat_id, $message_id): void
-    {
-
-        $this->editMessageText($chat_id, $message_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
-        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
-    }
-
-    public function votesERROR2($chat_id): void
-    {
-
-        $this->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
-        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
-    }
-
-
     public function sendLINK($chat_id, $survey_votes): void
     {
         $url = "https://t.me/share/url?url=https://t.me/{$_ENV['BOT_USERNAME']}?start={$survey_votes}";
