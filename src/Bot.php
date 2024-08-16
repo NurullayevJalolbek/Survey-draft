@@ -314,8 +314,6 @@ class Bot
 
     public function isMember2(array $channel_ids, int $user_id): bool
     {
-        var_dump($channel_ids);
-        echo $user_id;
         foreach ($channel_ids as $channel) {
             $response = $this->client->post('https://api.telegram.org/bot' . $_ENV['BOT_TOKEN'] . '/getChatMember', [
                 'json' => [
