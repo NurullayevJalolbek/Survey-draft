@@ -52,7 +52,6 @@ class Users
 
     public function userGet(int $chat_id): array|bool
     {
-        // SQL so'rovda parametrni foydalaning
         $stmt = $this->pdo->prepare("SELECT * FROM users WHERE user_id = :chat_id");
         $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);
         $stmt->execute();

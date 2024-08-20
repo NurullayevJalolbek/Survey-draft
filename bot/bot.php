@@ -116,7 +116,8 @@ if (isset($update->message)) {
         $userID = $userID['id'];
 
 
-        $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
+
+        $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id['survey_id']);
 
         if ($arrayVotes !== true) {
             $votes->addVOTES((int)$userID, (int)$survey_ID, (int)$uservariantID);
@@ -179,7 +180,7 @@ if (isset($update->callback_query)) {
 
 
     $channelARREY = $channels->allCHANNEL();
-    $dataID = $users->allDATA( (int ) $chatId);
+    $dataID = $users->allDATA((int )$chatId);
 
 
     if ($callbackData == 'tekshirish') {
@@ -191,7 +192,7 @@ if (isset($update->callback_query)) {
         $status = $bot->isMember($channelARREY, (int)$chatId);
 
         if ($status) {
-            $bot -> sendVariants2( $chatId, $messageId, (int)$dataID['data']);
+            $bot->sendVariants2($chatId, $messageId, (int)$dataID['data']);
             return;
         }
     }
@@ -207,6 +208,8 @@ if (isset($update->callback_query)) {
             $uservariantID = $users->allDATA($chatId);
             $uservariantID = $uservariantID['data'];
 
+            var_dump($uservariantID);
+
 
             $survey_id = $suveyVariant->survey_idALL($uservariantID);
             $survey_id = $survey_id['survey_id'];
@@ -215,11 +218,11 @@ if (isset($update->callback_query)) {
             $userID = $userID['id'];
 
             $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
+            var_dump([$userID, $survey_id, $uservariantID]);
+
             if ($arrayVotes !== true) {
                 $votes->addVOTES((int)$userID, (int)$survey_id, (int)$uservariantID);
                 $bot->sendMessage($chatId, "So'rovnomada qatnashganingiz uchun katta raxmat...❤️");
-                return;
-                //$bot->votes2($chatId);
                 return;
             }
             $bot->sendMessage($chatId, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ...
@@ -248,8 +251,8 @@ if (isset($update->callback_query)) {
 
             $users->addDATA($chatId, $colbacdata);
 
-            if (empty($channelARREY)){
-                $bot -> sendVariants2( $chatId, $messageId, $colbacdata);
+            if (empty($channelARREY)) {
+                $bot->sendVariants2($chatId, $messageId, $colbacdata);
                 return;
             }
 
@@ -258,7 +261,7 @@ if (isset($update->callback_query)) {
                 $bot->channel_check((int)$chatId, (array)$channelARREY);
                 return;
             } else {
-                $bot -> sendVariants2( $chatId,$messageId, $colbacdata);
+                $bot->sendVariants2($chatId, $messageId, $colbacdata);
             }
         }
     }
@@ -275,7 +278,7 @@ if (isset($update->callback_query)) {
         $page = (int)substr($callbackData, 5);
         $dataID = $users->allDATA($chatId);
 
-        $bot -> sendVariants2( $chatId,$messageId, $dataID['data'], $page);
+        $bot->sendVariants2($chatId, $messageId, $dataID['data'], $page);
         return;
     }
 
