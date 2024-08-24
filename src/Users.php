@@ -11,12 +11,14 @@ class Users
     {
         $this->pdo = DB::connect();
     }
-    public function usersAdd(int $chat_id,  $name, $phone): void
+    public function usersAdd(int $chat_id,  $name, $phone, string|null $userData = null, string |null $link = null): void
     {
-        $stmt = $this->pdo->prepare("INSERT INTO users (user_id, created_at, name, phone_number) VALUES (:chat_id, NOW(), :name, :phone)");
+        $stmt = $this->pdo->prepare("INSERT INTO users (user_id, data, created_at, name, phone_number, link) VALUES (:chat_id,  :userData, NOW(), :name, :phone, :link)");
         $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);
         $stmt->bindParam(":name", $name, PDO::PARAM_STR);
         $stmt->bindParam(":phone", $phone);
+        $stmt->bindParam(":link", $link, PDO::PARAM_STR);
+        $stmt->bindParam(":userData", $userData, PDO::PARAM_STR);
         $stmt->execute();
     }
     public function usersUpdatedata(int $chat_id, $userData, $name, $phone): void
@@ -104,5 +106,35 @@ class Users
         $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public  function  allLink($chat_id):bool
+    {
+        $stmt = $this->pdo->prepare("SELECT link FROM users WHERE user_id = :chat_id");
+        $stmt->bindParam(":chat_id", $chat_id, PDO::PARAM_INT);
+        $stmt->execute();
+        $resul = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $resul !== false && $resul['link'] !== null;
+
+    }
+
+    public  function  addCaptcha(int $randomSon, $chat_id)
+    {
+        $stmt = $this -> pdo -> prepare( " UPDATE users SET captcha_code = :randomSon WHERE user_id = :chat_id" );
+        $stmt -> bindParam( ":randomSon", $randomSon, PDO::PARAM_INT );
+        $stmt -> bindParam( ":chat_id", $chat_id, PDO::PARAM_INT );
+        $stmt -> execute();
+
+    }
+
+    public  function  allCaptcha($chat_id)
+    {
+        $stmt = $this -> pdo -> prepare( " SELECT captcha_code FROM users WHERE user_id = :chat_id" );
+        $stmt -> bindParam( ":chat_id", $chat_id, PDO::PARAM_INT );
+        $stmt -> execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+
+
+
     }
 }

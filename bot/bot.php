@@ -66,7 +66,7 @@ if (isset($update->message)) {
         }
     }
     // user part
-    if ($text == "/start") {
+    if ($text === "/start") {
 
         $users->deletDATA($chat_id);
 
@@ -74,35 +74,47 @@ if (isset($update->message)) {
 
         if (!$user) {
             $users->usersAdd($chat_id, (string)$name = null, $phone = null);
-            $bot->startCommand($chat_id);
+            $bot->Captcha($chat_id);
             return;
         } else {
             if (!$user['phone_number']) {
-                {
-                    $bot->startCommand($chat_id);
-                    return;
-                }
+                $bot->Captcha($chat_id);
+                return;
             }
             $bot->sendSurveys($chat_id);
             return;
         }
+
     }
+
+
     if (strpos($text, '/start') === 0) {
 
         $channelARREY = $channels->allCHANNEL();
 
         $survey_votes = str_replace('/start ', '', $text);
 
+
         $user = $users->userGet($chat_id);
+
         if (!$user) {
-            $users->usersAdd($chat_id, (string)$name = null, $phone = null);
+            $users->usersAdd($chat_id,  (string)$name = null,  $phone = null, (string)$survey_votes, "true");
+            $bot->Captcha($chat_id);
+            return;
+        } else {
+            if (!$user['phone_number']) {
+                $bot->Captcha($chat_id);
+                return;
+            }
+//            $bot->sendSurveys($chat_id);
+//            return;
         }
 
         $status1 = $bot->isMember2($channelARREY, (int)$chat_id);
-        if ($status1  === false) {
+        if ($status1 === false) {
 
             $bot->channel_check2((int)$chat_id, (array)$channelARREY);
-            $users->usersUpdatedata($chat_id, (string)$survey_votes, (string)$name = null, $phone = null);
+//            $users->usersUpdatedata($chat_id, (string)$survey_votes, (string)$name = null, $phone = null);
             return;
         }
 
@@ -110,42 +122,23 @@ if (isset($update->message)) {
         $uservariantID = $survey_votes;
 
         $survey_id = $suveyVariant->survey_idALL((int )$uservariantID);
-        $survey_ID= $survey_id['survey_id'];
+        $survey_ID = $survey_id['survey_id'];
 
         $userID = $users->userID($chat_id);
         $userID = $userID['id'];
-
 
 
         $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id['survey_id']);
 
         if ($arrayVotes !== true) {
             $votes->addVOTES((int)$userID, (int)$survey_ID, (int)$uservariantID);
-            $bot->sendMessage($chat_id,  "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+            $bot->sendMessage($chat_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
             return;
         }
         $bot->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... link 
         ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
         return;
 
-    }
-
-
-    if ($text == "/sorovnomalar") {
-        $user = $users->userGet($chat_id);
-
-        if (!$user) {
-            $users->usersAdd($chat_id, (string)$name = null, $phone = null);
-            $bot->startCommand($chat_id);
-            return;
-        } else {
-            if (!$user['phone_number']) {
-                $bot->startCommand($chat_id);
-                return;
-            }
-            $bot->sendSurveys($chat_id);
-            return;
-        }
     }
 
 
@@ -160,14 +153,57 @@ if (isset($update->message)) {
         $phone = $message->contact->phone_number;
 
 
+        $channelARREY = $channels->allCHANNEL();
+
+        $link = $users->allLink($chat_Id);
+
+
         if ($message->contact->user_id != $chat_Id) {
             $bot->kontagError($chat_Id);
             return;
+        } else {
+            if ($link === true) {
+
+                $status2 = $bot->isMember2($channelARREY, (int)$chat_id);
+
+                if ($status2 === false) {
+                    $bot->channel_check2($chat_Id, $channelARREY);
+                    $users->userUpdate((int)$chat_Id, (string)$name, (int)$phone);
+                    return;
+                }
+                $survey_votes = $users->allDATA($chat_Id);
+
+
+                $uservariantID = $survey_votes['data'];
+
+                $survey_id = $suveyVariant->survey_idALL((int )$uservariantID);
+                $survey_ID = $survey_id['survey_id'];
+
+                $userID = $users->userID($chat_id);
+                $userID = $userID['id'];
+
+
+                $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id['survey_id']);
+
+                if ($arrayVotes !== true) {
+                    $votes->addVOTES((int)$userID, (int)$survey_ID, (int)$uservariantID);
+                    $bot ->  removeKeyboard($chat_Id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+                    $bot->sendMessage($chat_Id, "Ovozingiz qabul qilindi");
+                    return;
+                }
+                $bot->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... link 
+        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+                return;
+
+            }
+
+            $bot->removeKeyboard($chat_Id, "Sizning ozvozingiz biz uchun muxum");
+            $users->userUpdate((int)$chat_Id, (string)$name, (int)$phone);
+            $bot->sendSurveys($chat_Id);
         }
-        $bot->removeKeyboard($chat_Id);
-        $users->userUpdate((int)$chat_Id, (string)$name, (int)$phone);
-        $bot->sendSurveys($chat_Id);
+
     }
+
 }
 
 
@@ -208,8 +244,6 @@ if (isset($update->callback_query)) {
             $uservariantID = $users->allDATA($chatId);
             $uservariantID = $uservariantID['data'];
 
-            var_dump($uservariantID);
-
 
             $survey_id = $suveyVariant->survey_idALL($uservariantID);
             $survey_id = $survey_id['survey_id'];
@@ -218,7 +252,7 @@ if (isset($update->callback_query)) {
             $userID = $userID['id'];
 
             $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
-            var_dump([$userID, $survey_id, $uservariantID]);
+//            var_dump([$userID, $survey_id, $uservariantID]);
 
             if ($arrayVotes !== true) {
                 $votes->addVOTES((int)$userID, (int)$survey_id, (int)$uservariantID);
@@ -243,7 +277,6 @@ if (isset($update->callback_query)) {
 
         if ($idArray) {
 
-
             $channelARREY = $channels->allCHANNEL();
 
 
@@ -255,7 +288,6 @@ if (isset($update->callback_query)) {
                 $bot->sendVariants2($chatId, $messageId, $colbacdata);
                 return;
             }
-
 
             if (!$status) {
                 $bot->channel_check((int)$chatId, (array)$channelARREY);
@@ -305,5 +337,22 @@ if (isset($update->callback_query)) {
         $inlineKeyboard ['inline_keyboard'][] = [['text' => "Havolani ulashish", 'url' => $url]];
         $message = "Quyidagi havolini do'slaringizga ulashishingiz mumkin:";
         $bot->sendMessage($chatId, $message, $inlineKeyboard);
+    }
+
+    if (strpos($callbackData, "captcha")) {
+        $captcha = $users->allCaptcha($chatId);
+        $captcha = $captcha['captcha_code'];
+
+        $colbacdata = explode('-', $callbackData);
+        $colbacdata = $colbacdata[0];
+
+        if ($captcha == $colbacdata) {
+            $bot->deletmessage($chatId, $messageId);
+            $bot->startCommand($chatId);
+        } else {
+            $bot->deletmessage($chatId, $messageId);
+            $bot->Captcha($chatId);
+            return;
+        }
     }
 }

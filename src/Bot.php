@@ -6,6 +6,7 @@ use GuzzleHttp\Client;
 
 require_once "vendor/autoload.php";
 require_once "src/Surveys.php";
+require_once "src/Users.php";
 
 
 class Bot
@@ -14,6 +15,7 @@ class Bot
     private Client $client;
     public Surveys $surves;
     public Survey_variants $surves_variant;
+    public Users $users;
 
     public function __construct(string $TOKEN)
     {
@@ -21,6 +23,7 @@ class Bot
         $this->client = new Client(['base_uri' => $this->API]);
         $this->surves = new Surveys();
         $this->surves_variant = new Survey_variants();
+        $this->users = new Users();
     }
 
 
@@ -118,7 +121,6 @@ class Bot
 
         $messageText = "Qaysi so'rovnomalarda qatnashmoqchisisz...✏️\n\n";
         $messageText .= "Sahifalar soni : $page/$totalPages";
-        echo $totalPages;
 
         $this->sendMessage($chat_id, $messageText, $keyboard);
     }
@@ -173,13 +175,11 @@ class Bot
     }
 
 
-    public function removeKeyboard(int $chat_id): void
+    public function removeKeyboard(int $chat_id, $text): void
     {
-        $this->sendMessage($chat_id, "Sizning ovozingiz biz uchun muhum.....!", ['remove_keyboard' => true]);
+        $this->sendMessage($chat_id, $text, ['remove_keyboard' => true]);
         sleep(1);
     }
-
-
 
 
     public function sendVariants2(int $chat_id, $message_id, $votesId, int $page = 1): void
@@ -229,7 +229,7 @@ class Bot
         $messageText .= "\n\nSahifalar soni : $page/$totalPages";
 
 
-        $this->editMessageText($chat_id,$message_id, $messageText, $keyboard);
+        $this->editMessageText($chat_id, $message_id, $messageText, $keyboard);
     }
 
 
@@ -300,6 +300,7 @@ class Bot
             $this->sendMessage($chat_id, $text, $inlineKeyboard);
         }
     }
+
     public function sendLINK($chat_id, $survey_votes): void
     {
         $url = "https://t.me/share/url?url=https://t.me/{$_ENV['BOT_USERNAME']}?start={$survey_votes}";
@@ -337,7 +338,6 @@ class Bot
 
         return true;
     }
-
 
 
     public function getChat2(int $chat_id)
@@ -381,5 +381,126 @@ class Bot
             $this->sendMessage($chat_id, $text, $inlineKeyboard);
         }
     }
+
+
+    public function Captcha($chat_id)
+    {
+        $jpg_image = imagecreatefromjpeg('IMAGE_FONT/cap.jpg');
+        if ($jpg_image === false) {
+            die('Rasmni yuklashda xato!');
+        }
+
+        $YozuvRangi = imagecolorallocate($jpg_image, 0, 0, 0);
+        $chiziqlarRangi = imagecolorallocate($jpg_image, 0, 0, 0);
+
+        if ($YozuvRangi === false || $chiziqlarRangi === false) {
+            imagedestroy($jpg_image);
+            die('Ranglarni yaratishda xato!');
+        }
+
+
+        $randmonson = rand(1000, 9999);
+
+        $this->users->addCaptcha($randmonson, $chat_id);
+
+        $font_path = 'IMAGE_FONT/FONT.ttf';
+        $textRazmeri = 45;
+        $yozuvningBurchagi = 20;
+
+        $image_kengligi = imagesx($jpg_image);
+        $image_balandligi = imagesy($jpg_image);
+
+        $matnRazmeri = imagettfbbox($textRazmeri, $yozuvningBurchagi, $font_path, (string)$randmonson);
+        $text_kengligi = abs($matnRazmeri[4] - $matnRazmeri[0]);
+        $text_balandlik = abs($matnRazmeri[5] - $matnRazmeri[1]);
+
+        $x = ($image_kengligi - $text_kengligi) / 2;
+        $y = ($image_balandligi - $text_balandlik) / 2 + $text_balandlik;
+
+        for ($i = 0; $i < 15; $i++) {
+            $x1 = rand(0, $image_kengligi);
+            $y1 = rand(0, $image_balandligi);
+            $x2 = rand(0, $image_kengligi);
+            $y2 = rand(0, $image_balandligi);
+            imageline($jpg_image, $x1, $y1, $x2, $y2, $chiziqlarRangi);
+        }
+
+        imagettftext($jpg_image, $textRazmeri, $yozuvningBurchagi, (int)$x, (int)$y, $YozuvRangi, $font_path, (string)$randmonson);
+
+        $temp_file = tempnam(sys_get_temp_dir(), 'captcha') . '.jpg';
+        imagejpeg($jpg_image, $temp_file);
+
+        $this->sendPhoto($chat_id, $temp_file);
+
+        imagedestroy($jpg_image);
+
+        unlink($temp_file);
+    }
+
+
+    public function sendPhoto($chat_id, $photoPath)
+    {
+        $chaptchason = $this->users->allCaptcha($chat_id);
+        $captcha_code = $chaptchason['captcha_code'];
+
+        $son1 = rand(1000, 9999);
+        $son2 = rand(1000, 9999);
+        $son3 = rand(1000, 9999);
+
+        $buttons = [
+            ['text' => $son1, 'callback_data' => "$son1-captcha"],
+            ['text' => $son2, 'callback_data' => "$son2-captcha"],
+            ['text' => $son3, 'callback_data' => "$son3-captcha"],
+            ['text' => $captcha_code, 'callback_data' => "$captcha_code-captcha"]
+
+        ];
+
+        shuffle($buttons);
+
+        $inlineKeyboard = [
+            'inline_keyboard' => array_chunk($buttons, 2) // Create rows of 2 buttons each
+        ];
+
+        $url = "https://api.telegram.org/bot" . $_ENV['BOT_TOKEN'] . "/sendPhoto";
+
+        $response = $this->client->post($url, [
+            'multipart' => [
+                [
+                    'name' => 'chat_id',
+                    'contents' => $chat_id
+                ],
+                [
+                    'name' => 'photo',
+                    'contents' => fopen($photoPath, 'r'),
+                    'filename' => basename($photoPath)
+                ],
+                [
+                    'name' => 'reply_markup',
+                    'contents' => json_encode($inlineKeyboard)
+                ]
+            ]
+        ]);
+
+        $body = $response->getBody()->getContents();
+        return json_decode($body, true);
+    }
+
+
+    public function deletmessage( $chat_id, $message_id)
+    {
+        $this-> client->post("https://api.telegram.org/bot".$_ENV['BOT_TOKEN']."/deleteMessage", [
+            'form_params' => [
+                'chat_id' => $chat_id,
+                'message_id' => $message_id,
+            ]
+        ]);
+    }
+
+
+
+
+
+
+
 
 }
