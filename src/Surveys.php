@@ -14,7 +14,7 @@ class Surveys
 
     public function surveysAll(): array
     {
-        $stmt = $this->pdo->prepare("SELECT * FROM surveys");
+        $stmt = $this->pdo->prepare("SELECT * FROM surveys where  expired_at > NOW()");
         $stmt->execute();
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

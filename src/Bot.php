@@ -301,17 +301,6 @@ class Bot
         }
     }
 
-    public function sendLINK($chat_id, $survey_votes): void
-    {
-        $url = "https://t.me/share/url?url=https://t.me/{$_ENV['BOT_USERNAME']}?start={$survey_votes}";
-
-        $inlineKeyboard ['inline_keyboard'][] = [['text' => "Havolani ulashish", 'url' => $url]];
-
-        $message = "Quyidagi havolini do'slaringizga ulashishingiz mumkin:";
-
-        $this->sendMessage($chat_id, $message, $inlineKeyboard);
-    }
-
 
     public function isMember2(array $channel_ids, int $user_id): bool
     {
@@ -386,17 +375,12 @@ class Bot
     public function Captcha($chat_id)
     {
         $jpg_image = imagecreatefromjpeg('IMAGE_FONT/cap.jpg');
-        if ($jpg_image === false) {
-            die('Rasmni yuklashda xato!');
-        }
+
+
 
         $YozuvRangi = imagecolorallocate($jpg_image, 0, 0, 0);
         $chiziqlarRangi = imagecolorallocate($jpg_image, 0, 0, 0);
 
-        if ($YozuvRangi === false || $chiziqlarRangi === false) {
-            imagedestroy($jpg_image);
-            die('Ranglarni yaratishda xato!');
-        }
 
 
         $randmonson = rand(1000, 9999);
@@ -404,6 +388,7 @@ class Bot
         $this->users->addCaptcha($randmonson, $chat_id);
 
         $font_path = 'IMAGE_FONT/FONT.ttf';
+
         $textRazmeri = 45;
         $yozuvningBurchagi = 20;
 
@@ -456,7 +441,6 @@ class Bot
         ];
 
         shuffle($buttons);
-
         $inlineKeyboard = [
             'inline_keyboard' => array_chunk($buttons, 2) // Create rows of 2 buttons each
         ];
@@ -495,12 +479,5 @@ class Bot
             ]
         ]);
     }
-
-
-
-
-
-
-
 
 }
