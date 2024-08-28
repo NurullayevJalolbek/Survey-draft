@@ -97,6 +97,9 @@ if (isset($update->message)) {
 
         $user = $users->userGet($chat_id);
 
+
+
+
         if (!$user) {
             $users->usersAdd($chat_id,  (string)$name = null,  $phone = null, (string)$survey_votes, "true");
             $bot->Captcha($chat_id);
@@ -188,11 +191,14 @@ if (isset($update->message)) {
                 if ($arrayVotes !== true) {
                     $votes->addVOTES((int)$userID, (int)$survey_ID, (int)$uservariantID);
                     $bot ->  removeKeyboard($chat_Id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+                    $users->userUpdate((int)$chat_Id, (string)$name, (int)$phone);
+
+
                     $bot->sendMessage($chat_Id, "Ovozingiz qabul qilindi");
                     return;
                 }
                 $bot->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... link 
-        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+        ❌\n  boshqa so'rovnomalarda qatnashishingiz mumkun ..");
                 return;
 
             }
@@ -260,7 +266,7 @@ if (isset($update->callback_query)) {
                 return;
             }
             $bot->sendMessage($chatId, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ...
-        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+        ❌\n  boshqa so'rovnomalarda qatnashishingiz mumkun...");
             return;
 
 
@@ -328,7 +334,7 @@ if (isset($update->callback_query)) {
 
         if ($arrayVotes) {
             $bot->editMessageText($chatId, $messageId, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
-        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+        ❌\n  boshqa so'rovnomalarda qatnashishingiz mumkun...");
             exit();
         }
         $votes->addVOTES($userID, (int)$userdata['data'], (int)$colbacdata);
