@@ -91,6 +91,12 @@ class Users
 
     }
 
+    public  function  userName($userId)
+    {
+
+
+    }
+
 
 
     public function deletDATA(int $chat_id): void

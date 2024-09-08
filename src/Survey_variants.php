@@ -38,4 +38,15 @@ class Survey_variants
         return $stmt->fetch(PDO::FETCH_ASSOC);
 
     }
+
+    public function  variantNAme(int $userId)
+    {
+
+        $stmt = $this->pdo->prepare("SELECT name FROM survey_variants WHERE id = :userId");
+        $stmt->bindParam(":userId", $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+
+    }
+
 }

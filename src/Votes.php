@@ -22,7 +22,7 @@ class Votes
         $stmt->execute();
     }
 
-    public function allVOTES(int $user_Id, int $userdATA): bool
+    public function getVotes(int $user_Id, int $userdATA): bool
     {
         $stmt = $this->pdo->prepare("SELECT survey_id, user_id FROM votes WHERE user_id = :user_Id AND survey_id = :userdATA");
         $stmt->bindParam(":user_Id", $user_Id, PDO::PARAM_INT);
@@ -30,6 +30,16 @@ class Votes
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return $result !== false;
+    }
+    public  function  allVotes($surveyID)
+    {
+
+        $stmt = $this->pdo->prepare("SELECT * FROM votes WHERE survey_id = :surveyID");
+        $stmt->bindParam(":surveyID", $surveyID, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_OBJ);
 
     }
+
+
 }

@@ -27,12 +27,24 @@ class Bot
     }
 
 
-    public function sendMessage(int $chat_id, $text, $reply_markup = null): void
+    public function sendMessage(int $chat_id, string|array$text, $reply_markup = null): void
     {
         $content = [
             'form_params' => [
                 'chat_id' => $chat_id,
-                'text' => $text,
+                'text' => $text
+            ]
+        ];
+
+        $reply_markup ? $content['form_params']['reply_markup'] = json_encode($reply_markup) : null;
+        $this->client->post('sendMessage', $content);
+    }
+    public function sendMessage2(int $chat_id, $text, $reply_markup = null): void
+    {
+        $content = [
+            'form_params' => [
+                'chat_id' => $chat_id,
+                'text' => print_r($text, true),
             ]
         ];
         $reply_markup ? $content['form_params']['reply_markup'] = json_encode($reply_markup) : null;
@@ -376,8 +388,6 @@ class Bot
     {
         $jpg_image = imagecreatefromjpeg('IMAGE_FONT/cap.jpg');
 
-
-
         $YozuvRangi = imagecolorallocate($jpg_image, 0, 0, 0);
         $chiziqlarRangi = imagecolorallocate($jpg_image, 0, 0, 0);
 
@@ -479,5 +489,64 @@ class Bot
             ]
         ]);
     }
+
+
+
+
+
+
+
+    public function Statictics(int $chat_id, $message_id = null, int $page = 1): void
+    {
+        $malumotlar = $this->surves->surveysAll();
+        $surveysPerPage = 10;
+        $totalSurveys = count($malumotlar);
+        $totalPages = ceil($totalSurveys / $surveysPerPage);
+
+        $start = ($page - 1) * $surveysPerPage;
+        $end = min($start + $surveysPerPage, $totalSurveys);
+
+        $inline_keyboard = array();
+        $row = array();
+
+        for ($i = $start; $i < $end; $i++) {
+            $item = $malumotlar[$i];
+            $row[] = ["text" => "{$item['name']}", "callback_data" => "ID-{$item['id']}"];
+
+            if (count($row) == 2) {
+                $inline_keyboard[] = $row;
+                $row = array();
+            }
+        }
+
+        if (!empty($row)) {
+            $inline_keyboard[] = $row;
+        }
+
+        $paginationRow = array();
+        if ($page > 1) {
+            $paginationRow[] = ["text" => "⬅️ Orqaga", "callback_data" => "page-" . ($page - 1)];
+        }
+        if ($page < $totalPages) {
+            $paginationRow[] = ["text" => "Oldinga ➡️", "callback_data" => "page-" . ($page + 1)];
+        }
+        if (!empty($paginationRow)) {
+            $inline_keyboard[] = $paginationRow;
+        }
+
+        $keyboard = [
+            'inline_keyboard' => $inline_keyboard
+        ];
+
+        $messageText = "Qaysi so'rovnomaning statistikasini ko'rmooqchisiz...✏️\n";
+        $messageText .= "Sahifalar soni : $page/$totalPages";
+
+        $this->sendMessage($chat_id,  $messageText, $keyboard);
+    }
+
+
+
+
+
 
 }

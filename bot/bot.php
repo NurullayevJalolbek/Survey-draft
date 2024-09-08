@@ -86,6 +86,12 @@ if (isset($update->message)) {
         }
 
     }
+    if ($text === '/statistics') {
+        $bot -> deletmessage($chat_id, $message_id);
+        $bot->Statictics($chat_id);
+        return;
+
+    }
 
 
     if (strpos($text, '/start') === 0) {
@@ -97,11 +103,8 @@ if (isset($update->message)) {
 
         $user = $users->userGet($chat_id);
 
-
-
-
         if (!$user) {
-            $users->usersAdd($chat_id,  (string)$name = null,  $phone = null, (string)$survey_votes, "true");
+            $users->usersAdd($chat_id, (string)$name = null, $phone = null, (string)$survey_votes, "true");
             $bot->Captcha($chat_id);
             return;
         } else {
@@ -131,15 +134,14 @@ if (isset($update->message)) {
         $userID = $userID['id'];
 
 
-        $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id['survey_id']);
+        $arrayVotes = $votes->getVotes((int )$userID, (int)$survey_id['survey_id']);
 
         if ($arrayVotes !== true) {
             $votes->addVOTES((int)$userID, (int)$survey_ID, (int)$uservariantID);
             $bot->sendMessage($chat_id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
             return;
         }
-        $bot->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... link 
-        ❌\n  boshqa so'rovnomalarda qatnashmoqchi bo'lsangiz  /sorovnomalar komandasini kiriting");
+        $bot->sendMessage($chat_id, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ..");
         return;
 
     }
@@ -186,11 +188,11 @@ if (isset($update->message)) {
                 $userID = $userID['id'];
 
 
-                $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id['survey_id']);
+                $arrayVotes = $votes->getVotes((int )$userID, (int)$survey_id['survey_id']);
 
                 if ($arrayVotes !== true) {
                     $votes->addVOTES((int)$userID, (int)$survey_ID, (int)$uservariantID);
-                    $bot ->  removeKeyboard($chat_Id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
+                    $bot->removeKeyboard($chat_Id, "so'rovnomada qatnashganingiz uchun katta raxmat...❤️");
                     $users->userUpdate((int)$chat_Id, (string)$name, (int)$phone);
 
 
@@ -257,7 +259,7 @@ if (isset($update->callback_query)) {
             $userID = $users->userID($chatId);
             $userID = $userID['id'];
 
-            $arrayVotes = $votes->allVOTES((int )$userID, (int)$survey_id);
+            $arrayVotes = $votes->getVotes((int )$userID, (int)$survey_id);
 //            var_dump([$userID, $survey_id, $uservariantID]);
 
             if ($arrayVotes !== true) {
@@ -330,7 +332,7 @@ if (isset($update->callback_query)) {
         $userID = $users->userID($chatId);
         $userID = $userID['id'];
 
-        $arrayVotes = $votes->allVOTES((int )$userID, (int)$userdata['data']);
+        $arrayVotes = $votes->getVotes((int )$userID, (int)$userdata['data']);
 
         if ($arrayVotes) {
             $bot->editMessageText($chatId, $messageId, "Hurmatli foydanalanuvchi bu so'rovnomada oldin qatnashgansiz ... 
@@ -360,5 +362,47 @@ if (isset($update->callback_query)) {
             $bot->Captcha($chatId);
             return;
         }
+    }
+
+
+    if (strpos($callbackData, "ID-") !== false) {
+        $colbacdata = explode('-', $callbackData);
+        $colbacdata = $colbacdata[1];
+
+        $surveys = (new Votes())->allVotes((int)$colbacdata);
+
+        $statistika = [];
+
+        foreach ($surveys as $survey) {
+            $user = (new Survey_variants())->variantNAme($survey->survey_variant_id);
+
+            $num = false;
+            foreach ($statistika as &$stat) {
+                if ($stat['name'] === $user['name']) {
+
+                    $stat['count'] += 1;
+                    $num = true;
+                    break;
+                }
+            }
+
+            if (!$num) {
+                $statistika[] = ['name' => $user['name'], 'count' => 1];
+            }
+        }
+        $javob = "";
+
+        $surveyName = (new Surveys())->getSurveyName((int)$colbacdata);
+        $javob = "So'rovnoma turi:     " . $surveyName['name'] . "\n";
+        $javob .=  "─────────────────────────────────\n";
+
+        unset($stat);
+        foreach ($statistika as $stat) {
+            $javob .= $stat['name'] . " - " . $stat['count'] . "\n";
+
+        }
+        $bot->sendMessage($chatId, $javob);
+        $bot -> deletmessage($chatId, $messageId);
+        return;
     }
 }
