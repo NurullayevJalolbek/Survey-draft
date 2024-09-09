@@ -87,12 +87,23 @@ if (isset($update->message)) {
 
     }
     if ($text === '/statistics') {
-        $bot -> deletmessage($chat_id, $message_id);
-        $bot->Statictics($chat_id);
-        return;
 
+        $user = $users->userGet($chat_id);
+
+        if (!$user) {
+            $users->usersAdd($chat_id, (string)$name = null, $phone = null);
+            $bot->Captcha($chat_id);
+            return;
+        } else {
+            if (!$user['phone_number']) {
+                $bot->Captcha($chat_id);
+                return;
+            }
+            $bot -> deletmessage($chat_id, $message_id);
+            $bot->Statictics($chat_id);
+            return;
+        }
     }
-
 
     if (strpos($text, '/start') === 0) {
 
