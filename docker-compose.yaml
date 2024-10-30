@@ -1,0 +1,47 @@
+services:
+  bot_nginx:
+    container_name: bot_nginx
+    image: nginx:alpine
+    ports:
+      - "9090:80"
+    volumes:
+      - ./:/var/www
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - bot_app
+    networks:
+      - bot-network
+
+
+  bot_app:
+    container_name: bot_app
+    build: .  # Dockerfile asosida quriladi
+    depends_on:
+      - bot_db
+    volumes:
+      - ./:/var/www
+    networks:
+      - bot-network
+
+  bot_db:
+    container_name: bot_db
+    image: mysql:8
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root  # Root foydalanuvchi uchun parol sozlayapmiz
+      MYSQL_DATABASE: bot_app     # Bazaning nomi
+    volumes:
+      - bot_app_db:/var/lib/mysql
+    networks:
+      - bot-network
+
+
+# Tarmoqlar va ma'lumotlar hajmini saqlash
+networks:
+  bot-network:
+    driver: bridge
+
+volumes:
+  bot_app_db:
