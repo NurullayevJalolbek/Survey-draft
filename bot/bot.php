@@ -1,6 +1,9 @@
 <?php
 
 declare(strict_types=1);
+
+use GuzzleHttp\Exception\GuzzleException;
+
 require_once "vendor/autoload.php";
 
 require_once "src/Users.php";

@@ -13,6 +13,7 @@ services:
       - bot-network
 
 
+
   bot_app:
     container_name: bot_app
     build: .  # Dockerfile asosida quriladi
@@ -22,6 +23,8 @@ services:
       - ./:/var/www
     networks:
       - bot-network
+    ports:
+      - "9000:9000"
 
   bot_db:
     container_name: bot_db
@@ -34,8 +37,10 @@ services:
       MYSQL_DATABASE: bot_app     # Bazaning nomi
     volumes:
       - bot_app_db:/var/lib/mysql
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql  # db.sql faylini konteyner ichiga mount qilish
     networks:
       - bot-network
+
 
 
 # Tarmoqlar va ma'lumotlar hajmini saqlash
