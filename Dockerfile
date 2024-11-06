@@ -18,6 +18,13 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs
 
+# Dockerfile
+FROM ngrok/ngrok:latest
+
+# Authtokenni to'g'ri belgilash
+RUN ngrok config add-authtoken 2oL52loVHP2gaIUqTVpnEWY0ZbM_6gxaaWt9ddegw4XPRumFN
+
+
 # Container ichida ish katalogini belgilaymiz
 WORKDIR /var/www
 
